@@ -1,0 +1,30 @@
+[package]
+name = "garland"
+version = "0.1.0"
+authors = ["yuri"]
+edition = "2021"
+
+[dependencies]
+cortex-m = {version = "0.7.7", features = ["critical-section-single-core"]}
+itertools = {version = "0.12.0", default-features = false}
+panic-rtt-target = {version = "0.1.2", features = ["cortex-m"]}
+rtic = {version = "2.0.1", features = ["thumbv7-backend"]}
+rtic-monotonics = {version = "1.0.1", features = ["cortex-m-systick"]}
+rtic-sync = "1.1.1"
+rtt-target = "0.4.0"
+smart-leds = "0.3.0"
+stm32f1xx-hal = {version = "0.10.0", features = ["stm32f103", "rt", "medium"]}
+tinyrand = "0.5.0"
+ws2812-blocking-spi = "0.2.0"
+
+
+# Set the default for dependencies.
+[profile.dev.package."*"]
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+incremental = false
+debug = true
+lto = true
+opt-level = "s"
