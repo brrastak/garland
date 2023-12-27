@@ -15,18 +15,16 @@ use hal:: {
     };
 use rtic_monotonics::systick::*;
 use rtic_sync::{channel::*, make_channel};
-use smart_leds::{SmartLedsWrite, RGB8};
 use tinyrand::{StdRand, RandRange, Seeded};
 use ws2812_blocking_spi::Ws2812BlockingWriter;
+
+use garland::garland::{no_pastel, LED_NUMBER, ColorFrame, SmartLedsWrite, RGB8};
 
 
 #[rtic::app(device = hal::pac, peripherals = true, dispatchers = [EXTI0, EXTI1])]
 mod app {
 
     use super::*;
-
-    const LED_NUMBER: usize = 300;
-    type ColorFrame = [RGB8; LED_NUMBER];
 
 
     #[shared]
@@ -95,6 +93,7 @@ mod app {
         )
     }
 
+    // Blink on-board LED
     #[task(local = [led], priority = 1)]
     async fn heartbeat(cx: heartbeat::Context) {
 
@@ -109,6 +108,7 @@ mod app {
         }
     }
 
+    // Generate random RGB color
     #[task(priority = 1)]
     async fn get_new_color(
         cx: get_new_color::Context,
@@ -131,6 +131,7 @@ mod app {
         }
     }
 
+    /// Generate color frame for LED strip using random color
     #[task(priority = 1)]
     async fn generate_color_frame(
         _cx: generate_color_frame::Context,
@@ -154,6 +155,7 @@ mod app {
         }
     }
 
+    // Send color frame to physical LED strip
     #[task(local = [led_strip], priority = 2)]
     async fn update_led_strip(
         cx: update_led_strip::Context, 
@@ -175,36 +177,5 @@ mod app {
         loop {
             continue;
         }
-    }
-}
-
-
-fn no_pastel(color: RGB8) -> RGB8 {
-
-    let mut res = color;
-
-    if color.r == max(color.r, color.g, color.b) {
-        res.g /= 3;
-        res.b /= 3;
-    } else if color.g == max(color.r, color.g, color.b) {
-        res.r /= 3;
-        res.b /= 3;
-    } else {
-        res.r /= 3 + 1;
-        res.g /= 3 + 1;
-    }
-
-    res
-}
-
-fn max(one: u8, two: u8, three: u8) -> u8 {
-    max2(one, max2(two, three))
-}
-
-fn max2(one: u8, two: u8) -> u8 {
-    if one > two {
-        one
-    } else {
-        two
     }
 }
