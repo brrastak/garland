@@ -6,6 +6,7 @@ pub use hal:: {
         gpio::*,
         spi::*,
         pac::Peripherals,
+        adc::*,
     };
 
 
@@ -14,6 +15,8 @@ pub struct Board {
     pub clocks: Clocks,
     pub led: ErasedPin<Output>,
     pub spi: Spi<hal::pac::SPI1, Spi1Remap, (NoSck, NoMiso, Pin<'B', 5, Alternate>), u8>,
+    pub adc_pin: Pin<'A', 0, Analog>,
+    pub adc: Adc<hal::pac::ADC1>,
 }
 
 impl Board {
@@ -32,6 +35,7 @@ impl Board {
             .pclk2(72.MHz())
             .freeze(&mut flash.acr);
 
+        let mut gpioa = p.GPIOA.split();
         let mut gpiob = p.GPIOB.split();
         let mut gpioc = p.GPIOC.split();
 
@@ -49,7 +53,9 @@ impl Board {
                 },
                 3.MHz(),
                 clocks
-            )
+            ),
+            adc_pin: gpioa.pa0.into_analog(&mut gpioa.crl),
+            adc: Adc::adc1(p.ADC1, clocks)
         }
     }
 }

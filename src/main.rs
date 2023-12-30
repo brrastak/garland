@@ -16,8 +16,10 @@ use garland::bsp::{Board, hal};
 use hal:: {
         gpio::*,
         spi::*,
+        adc::*,
     };
 use garland::garland::{no_pastel, LED_NUMBER, ColorFrame, SmartLedsWrite, RGB8};
+use garland::adc_rand_seed::adc_seed;
 
 
 #[rtic::app(device = hal::pac, peripherals = true, dispatchers = [EXTI0, EXTI1])]
@@ -32,7 +34,9 @@ mod app {
     #[local]
     struct Local {
         led: ErasedPin<Output>,
-        led_strip: Ws2812BlockingWriter<Spi<hal::pac::SPI1, Spi1Remap, (NoSck, NoMiso, Pin<'B', 5, Alternate>), u8>>
+        led_strip: Ws2812BlockingWriter<Spi<hal::pac::SPI1, Spi1Remap, (NoSck, NoMiso, Pin<'B', 5, Alternate>), u8>>,
+        adc_pin: Pin<'A', 0, Analog>,
+        adc: Adc<hal::pac::ADC1>,
     }
 
     #[init]
@@ -43,6 +47,8 @@ mod app {
         let board = Board::new(cx.device);
         let led = board.led;
         let led_strip = Ws2812BlockingWriter::new(board.spi);
+        let adc_pin = board.adc_pin;
+        let adc = board.adc;
 
         let systick_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, board.clocks.sysclk().to_Hz(), systick_token);
@@ -61,7 +67,9 @@ mod app {
             },
             Local {
                led,
-               led_strip
+               led_strip,
+               adc_pin,
+               adc
             },
         )
     }
@@ -82,14 +90,17 @@ mod app {
     }
 
     // Generate random RGB color
-    #[task(priority = 1)]
+    #[task(local = [adc, adc_pin], priority = 1)]
     async fn get_new_color(
         cx: get_new_color::Context,
         mut color_sender: Sender<'static, RGB8, 1>)
     {
+        let get_new_color::LocalResources
+            {adc, adc_pin, ..} = cx.local;
 
         let amplitude = 10u16;
-        let mut rand = StdRand::seed(42);
+        let seed = adc_seed(adc, adc_pin).unwrap();
+        let mut rand = StdRand::seed(seed as u64);
 
         loop {
             
