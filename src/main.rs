@@ -18,7 +18,15 @@ use hal:: {
         spi::*,
         adc::*,
     };
-use garland::garland::{no_pastel, LED_NUMBER, ColorFrame, SmartLedsWrite, RGB8};
+use garland::garland::{
+    no_pastel,
+    // single_point,
+    triangle_wave,
+    LED_NUMBER,
+    AMPLITUDE,
+    ColorFrame,
+    SmartLedsWrite,
+    RGB8};
 use garland::adc_rand_seed::adc_seed;
 
 
@@ -98,20 +106,23 @@ mod app {
         let get_new_color::LocalResources
             {adc, adc_pin, ..} = cx.local;
 
-        let amplitude = 10u16;
         let seed = adc_seed(adc, adc_pin).unwrap();
         let mut rand = StdRand::seed(seed as u64);
 
         loop {
             
             let color = RGB8 {
-                r: rand.next_range(0..amplitude) as u8,
-                g: rand.next_range(0..amplitude) as u8,
-                b: rand.next_range(0..amplitude) as u8,
+                r: rand.next_range(0..AMPLITUDE) as u8,
+                g: rand.next_range(0..AMPLITUDE) as u8,
+                b: rand.next_range(0..AMPLITUDE) as u8,
             };
             let color = no_pastel(color);
+            let pattern = triangle_wave(color);
 
-            color_sender.send(color).await.ok();
+            for color in pattern {
+
+                color_sender.send(color).await.ok();
+            }
         }
     }
 

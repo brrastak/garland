@@ -227,6 +227,7 @@ dependencies = [
  "cortex-m",
  "embedded-hal 0.2.7",
  "embedded-hal-mock",
+ "heapless",
  "itertools",
  "nb 1.1.0",
  "panic-rtt-target",
